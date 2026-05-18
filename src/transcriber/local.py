@@ -1,7 +1,9 @@
-"""Local transcription using faster-whisper (CPU)."""
+"""Local transcription using faster-whisper (CPU) with long-audio chunking."""
 
 import logging
+import subprocess
 import time
+import tempfile
 from pathlib import Path
 
 from faster_whisper import WhisperModel
@@ -11,9 +13,8 @@ from src.models.schemas import TranscriptResult
 
 logger = logging.getLogger(__name__)
 
-# Model size options (in order of accuracy/speed): tiny, base, small, medium, large-v3
-# For CPU Chinese ASR, 'small' is a good tradeoff
 DEFAULT_MODEL = "small"
+CHUNK_SECONDS = 1800  # 30 min chunks to avoid OOM on long audio
 
 
 class LocalTranscriber(Transcriber):
@@ -27,28 +28,38 @@ class LocalTranscriber(Transcriber):
         logger.info("Model loaded in %.1f sec", elapsed)
 
     def transcribe(self, audio_path: Path, duration_sec: float | None = None) -> TranscriptResult:
-        logger.info("Transcribing %s...", audio_path.name)
         t0 = time.time()
 
-        segments, info = self.model.transcribe(
-            str(audio_path),
-            language="zh",
-            beam_size=5,
-            word_timestamps=False,
-        )
+        # Chunk long audio to avoid out-of-memory in feature extractor
+        chunk_paths = self._split_audio(audio_path, duration_sec) if (duration_sec or 0) > CHUNK_SECONDS else [audio_path]
 
-        text_parts = []
-        seg_list = []
-        for seg in segments:
-            text_parts.append(seg.text.strip())
-            seg_list.append({
-                "text": seg.text.strip(),
-                "start_time": seg.start,
-                "end_time": seg.end,
-            })
+        all_text_parts = []
+        all_segments = []
+        total_duration = 0.0
 
-        full_text = "\n".join(text_parts)
-        actual_duration = info.duration or duration_sec or 0
+        for i, chunk in enumerate(chunk_paths):
+            logger.info("Transcribing chunk %d/%d: %s...", i + 1, len(chunk_paths), chunk.name)
+            segments, info = self.model.transcribe(
+                str(chunk),
+                language="zh",
+                beam_size=5,
+                word_timestamps=False,
+            )
+            for seg in segments:
+                all_text_parts.append(seg.text.strip())
+                all_segments.append({
+                    "text": seg.text.strip(),
+                    "start_time": seg.start + i * CHUNK_SECONDS,
+                    "end_time": seg.end + i * CHUNK_SECONDS,
+                })
+            total_duration += info.duration if info and info.duration else 0
+
+            # Clean up chunk file (not the original)
+            if chunk != audio_path:
+                chunk.unlink(missing_ok=True)
+
+        full_text = "\n".join(all_text_parts)
+        actual_duration = total_duration or duration_sec or 0
         elapsed = time.time() - t0
 
         logger.info(
@@ -58,7 +69,43 @@ class LocalTranscriber(Transcriber):
 
         return TranscriptResult(
             raw_text=full_text,
-            segments=seg_list,
+            segments=all_segments,
             duration_sec=actual_duration,
-            cost_yuan=0.0,  # free!
+            cost_yuan=0.0,
         )
+
+    def _split_audio(self, audio_path: Path, duration_sec: float | None) -> list[Path]:
+        """Split audio into CHUNK_SECONDS chunks using ffmpeg."""
+        if duration_sec is None:
+            # probe duration
+            result = subprocess.run(
+                ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                 "-of", "default=noprint_wrappers=1:nokey=1", str(audio_path)],
+                check=True, capture_output=True, text=True, timeout=30,
+            )
+            duration_sec = float(result.stdout.strip())
+
+        n_chunks = int(duration_sec) // CHUNK_SECONDS + 1
+        logger.info("Splitting %.1f sec audio into %d chunks (%d sec each)...",
+                     duration_sec, n_chunks, CHUNK_SECONDS)
+
+        tmp_dir = Path(tempfile.mkdtemp(prefix="whisper_chunks_"))
+        out_pattern = str(tmp_dir / "chunk_%03d.wav")
+
+        subprocess.run(
+            [
+                "ffmpeg", "-y",
+                "-i", str(audio_path),
+                "-f", "segment",
+                "-segment_time", str(CHUNK_SECONDS),
+                "-c", "pcm_s16le",
+                "-ar", "16000",
+                "-ac", "1",
+                out_pattern,
+            ],
+            check=True, capture_output=True, timeout=3600,
+        )
+
+        chunk_files = sorted(tmp_dir.glob("chunk_*.wav"))
+        logger.info("Split into %d chunks", len(chunk_files))
+        return chunk_files
