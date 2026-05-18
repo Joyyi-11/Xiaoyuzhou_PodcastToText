@@ -85,6 +85,10 @@ src/
     └── llm_processor.py    # DeepSeek 后处理
 ```
 
+## 致谢
+
+- 本项目使用 Claude Code 辅助开发
+
 ## License
 
 MIT
