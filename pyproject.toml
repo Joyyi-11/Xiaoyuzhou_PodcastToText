@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xiaoyuzhou-podcast-to-text"
+version = "0.1.0"
+description = "小宇宙播客转录工具 — 输入链接，输出结构化 Markdown"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.28",
+    "beautifulsoup4>=4.12",
+    "python-dotenv>=1.0",
+    "openai>=1.0",
+    "pydantic>=2.0",
+    "faster-whisper>=1.0",
+]
+
+[project.scripts]
+podcast-to-text = "src.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

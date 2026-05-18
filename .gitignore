@@ -1,0 +1,29 @@
+# .env 含密钥，不提交
+.env
+
+# 输出目录
+output/*.md
+output/*.txt
+output/podcast_audio.*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# 临时音频
+*.wav
+*.mp3
+*.m4a
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
