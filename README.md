@@ -41,7 +41,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key
 |------|--------|------|
 | `url` | 必填 | 小宇宙播客单集链接 |
 | `-o` | `output/` | 输出目录 |
-| `--model` | `tiny` | Whisper 模型大小（tiny/base/small/medium/large-v3） |
+| `--model` | `small` | Whisper 模型大小（tiny/base/small/medium/large-v3） |
 | `--no-llm` | 否 | 仅转写，跳过 DeepSeek 后处理 |
 
 ## 输出格式

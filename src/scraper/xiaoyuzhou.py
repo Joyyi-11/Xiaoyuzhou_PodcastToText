@@ -3,6 +3,7 @@
 import json
 import logging
 import re
+from datetime import datetime, timezone, timedelta
 
 import requests
 from bs4 import BeautifulSoup
@@ -199,10 +200,18 @@ def _find_pub_date_from_json_ld(soup: BeautifulSoup) -> str | None:
 
 
 def _extract_date_from_ld(data: dict) -> str | None:
+    """Extract pub date from JSON-LD, converting UTC to China time (UTC+8)."""
     for key in ("datePublished", "dateCreated", "pubDate"):
         val = data.get(key)
         if val:
-            return str(val)[:10]
+            # Parse ISO date, convert UTC to China timezone
+            try:
+                dt = datetime.fromisoformat(val.replace("Z", "+00:00"))
+                china_tz = timezone(timedelta(hours=8))
+                dt_china = dt.astimezone(china_tz)
+                return dt_china.strftime("%Y-%m-%d")
+            except (ValueError, AttributeError):
+                return str(val)[:10]
     for item in data.get("@graph", []):
         d = _extract_date_from_ld(item)
         if d:

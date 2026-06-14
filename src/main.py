@@ -62,8 +62,8 @@ def main() -> None:
     )
     parser.add_argument("url", help="小宇宙播客单集链接")
     parser.add_argument("-o", "--output", default="output", help="输出目录 (默认: output/)")
-    parser.add_argument("--model", default="tiny", choices=["tiny", "base", "small", "medium", "large-v3"],
-                        help="Whisper 模型大小 (默认: tiny, 用--model small 可提高准确率)")
+    parser.add_argument("--model", default="small", choices=["tiny", "base", "small", "medium", "large-v3"],
+                        help="Whisper 模型大小 (默认: small)")
     parser.add_argument("--no-llm", action="store_true", help="仅转录，不进行 LLM 后处理")
     args = parser.parse_args()
 
