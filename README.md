@@ -7,7 +7,7 @@
 - 爬取小宇宙播客节目信息、Show Notes
 - 下载音频并转写为文字（本地 faster-whisper，免费）
 - DeepSeek 后处理：标点修正、语义分段、专名纠错、要点提炼、闪光语句提取
-- 输出结构化 Markdown：Show Notes → 要点速览 → 闪光语句 → 全文转录
+- 输出结构化 Markdown：Show Notes → 内容提要 → 闪光语句 → 全文转录
 
 ## 快速开始
 
@@ -53,7 +53,7 @@ DEEPSEEK_API_KEY=your_deepseek_api_key
 # Show Notes
 （完整保留的节目介绍）
 
-## 要点速览
+## 内容提要
 - **要点名称**：支撑证据
 
 ## 闪光语句

@@ -9,7 +9,7 @@ class TestParseOutput:
 
 > Source
 
-## 要点速览
+## 内容提要
 
 - **核心观点一**：这是支撑证据第一句。这是第二句。
 - **重要数据**：数据显示增长50%。
@@ -36,7 +36,7 @@ class TestParseOutput:
     def test_with_highlight_quotes(self):
         content = """# Test Title
 
-## 要点速览
+## 内容提要
 
 - **核心观点**：证据文本。
 
@@ -58,7 +58,7 @@ class TestParseOutput:
         """Evidence should not contain duplicated point title."""
         content = """# Test
 
-## 要点速览
+## 内容提要
 
 - **核心观点A**：核心观点A**：这是支撑证据。
 

@@ -85,7 +85,7 @@ def _parse_output(
 
     The LLM output follows the template format:
       # Title
-      ## 要点速览
+      ## 内容提要
       - **point**: evidence
       ## 闪光语句
       - "quote"
@@ -95,8 +95,8 @@ def _parse_output(
     key_points: list[KeyPoint] = []
     highlight_quotes: list[str] = []
 
-    # --- Parse 要点速览 section ---
-    m_toc = re.search(r"##\s*要点速览\s*\n(.*?)(?=##\s*(?:闪光语句|全文转录)|$)", content, re.DOTALL)
+    # --- Parse 内容提要 section ---
+    m_toc = re.search(r"##\s*内容提要\s*\n(.*?)(?=##\s*(?:闪光语句|全文转录)|$)", content, re.DOTALL)
     if m_toc:
         toc_section = m_toc.group(1)
         for line in toc_section.strip().split("\n"):

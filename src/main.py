@@ -43,14 +43,14 @@ def build_output_markdown(doc: OutputDoc) -> str:
     if doc.show_notes:
         lines += ["", "# Show Notes", "", doc.show_notes]
 
-    lines += ["", "## 要点速览", ""]
+    lines += ["", "## 内容提要", ""]
     for kp in doc.key_points:
-        lines.append(f"- **{kp.point}**：{kp.evidence}")
+        lines.append(f"- **{kp.point}**{kp.evidence}")
 
     if doc.highlight_quotes:
         lines += ["", "## 闪光语句", ""]
         for q in doc.highlight_quotes:
-            lines.append(f"> {q}")
+            lines.append(f'- "{q}"')
 
     lines += ["", "## 全文转录", "", doc.full_text]
     return "\n".join(lines)
