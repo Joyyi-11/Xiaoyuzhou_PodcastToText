@@ -2,9 +2,10 @@
 
 import logging
 import re
+
 from openai import OpenAI
 
-from src.models.schemas import OutputDoc, KeyPoint
+from src.models.schemas import KeyPoint, OutputDoc
 from src.processor.prompt import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
 
 logger = logging.getLogger(__name__)

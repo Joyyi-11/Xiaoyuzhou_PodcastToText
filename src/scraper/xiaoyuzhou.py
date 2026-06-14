@@ -1,11 +1,11 @@
 """Scrape Xiaoyuzhou FM episode page for audio URL and metadata."""
 
+import json
 import logging
 import re
-import json
+
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
 
 from src.models.schemas import EpisodeInfo
 

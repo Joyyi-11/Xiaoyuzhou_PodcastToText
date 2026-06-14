@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -11,7 +10,7 @@ class EpisodeInfo:
     pub_date: str
     show_notes: str
     audio_url: str
-    cover_url: Optional[str] = None
+    cover_url: str | None = None
 
 
 @dataclass

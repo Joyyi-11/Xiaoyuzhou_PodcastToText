@@ -19,5 +19,16 @@ dependencies = [
 [project.scripts]
 podcast-to-text = "src.main:main"
 
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["N"]
+"src/processor/prompt.py" = ["E501"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src"]

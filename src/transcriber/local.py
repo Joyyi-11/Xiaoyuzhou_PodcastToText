@@ -2,19 +2,21 @@
 
 import logging
 import subprocess
-import time
 import tempfile
+import time
 from pathlib import Path
 
+import ctranslate2  # ensure version is pinned: pip install ctranslate2==4.6.0
 from faster_whisper import WhisperModel
 
-from src.transcriber.base import Transcriber
 from src.models.schemas import TranscriptResult
+from src.transcriber.base import Transcriber
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "small"
 CHUNK_SECONDS = 1800  # 30 min chunks to avoid OOM on long audio
+MODEL_CACHE = str(Path.home() / ".cache" / "faster_whisper")
 
 
 class LocalTranscriber(Transcriber):
@@ -23,7 +25,32 @@ class LocalTranscriber(Transcriber):
     def __init__(self, model_size: str = DEFAULT_MODEL):
         logger.info("Loading faster-whisper model: %s (CPU, int8)...", model_size)
         t0 = time.time()
-        self.model = WhisperModel(model_size, device="cpu", compute_type="int8")
+
+        # Try local cache first to avoid HF network issues
+        cache_path = Path(MODEL_CACHE) / ("models--Systran--faster-whisper-" + model_size)
+        snapshots = cache_path / "snapshots"
+        if snapshots.exists():
+            snapshot_dirs = list(snapshots.iterdir())
+            if snapshot_dirs:
+                local_model_path = snapshot_dirs[0]
+                if (local_model_path / "model.bin").exists():
+                    logger.info("Found cached model at %s, loading locally...", local_model_path)
+                    self.model = WhisperModel(
+                        str(local_model_path),
+                        device="cpu",
+                        compute_type="int8",
+                    )
+                    elapsed = time.time() - t0
+                    logger.info("Model loaded in %.1f sec", elapsed)
+                    return
+
+        # Download via Hub
+        self.model = WhisperModel(
+            model_size,
+            device="cpu",
+            compute_type="int8",
+            download_root=MODEL_CACHE,
+        )
         elapsed = time.time() - t0
         logger.info("Model loaded in %.1f sec", elapsed)
 
@@ -31,7 +58,10 @@ class LocalTranscriber(Transcriber):
         t0 = time.time()
 
         # Chunk long audio to avoid out-of-memory in feature extractor
-        chunk_paths = self._split_audio(audio_path, duration_sec) if (duration_sec or 0) > CHUNK_SECONDS else [audio_path]
+        if (duration_sec or 0) > CHUNK_SECONDS:
+            chunk_paths = self._split_audio(audio_path, duration_sec)
+        else:
+            chunk_paths = [audio_path]
 
         all_text_parts = []
         all_segments = []

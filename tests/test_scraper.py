@@ -1,6 +1,7 @@
 """Tests for the scraper module."""
 
 import pytest
+
 from src.scraper.xiaoyuzhou import parse_episode_id
 
 

@@ -17,13 +17,13 @@ if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
     except Exception:
         pass
 
+from src.audio import convert_to_wav, download_audio, get_duration_seconds
 from src.config import get_deepseek_api_key
-from src.scraper.xiaoyuzhou import scrape_episode
-from src.audio import download_audio, convert_to_wav, get_duration_seconds
-from src.transcriber.local import LocalTranscriber
-from src.processor import llm_processor
-from src.utils import CostTracker, Timer, fmt_time
 from src.models.schemas import OutputDoc
+from src.processor import llm_processor
+from src.scraper.xiaoyuzhou import scrape_episode
+from src.transcriber.local import LocalTranscriber
+from src.utils import CostTracker, Timer, fmt_time
 
 logging.basicConfig(
     level=logging.INFO,
@@ -140,7 +140,7 @@ def main() -> None:
                 doc.costs = {"transcription": tracker.transcription_yuan, "llm": tracker.llm_cost_yuan}
                 doc.timings = timers
                 md_content = build_output_markdown(doc)
-                safe_name = episode.title.replace("/", "_").replace("\\", "_")[:80]
+                safe_name = episode.title.replace("/", "_").replace("\\", "_").replace('"', '').replace('"', '').replace("|", "_").replace("?", "_").replace("*", "_").replace(":", "_")[:80]
                 output_path = output_dir / f"{safe_name}.md"
                 output_path.write_text(md_content, encoding="utf-8")
             timers["write"] = t.elapsed

@@ -14,8 +14,8 @@ from pathlib import Path
 
 import requests
 
-from src.transcriber.base import Transcriber
 from src.models.schemas import TranscriptResult
+from src.transcriber.base import Transcriber
 
 logger = logging.getLogger(__name__)
 

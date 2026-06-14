@@ -1,7 +1,6 @@
 """Tests for the LLM processor module."""
 
 from src.processor.llm_processor import _parse_output
-from src.models.schemas import KeyPoint
 
 
 class TestParseOutput:
