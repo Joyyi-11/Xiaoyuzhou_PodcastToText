@@ -50,7 +50,10 @@ def build_output_markdown(doc: OutputDoc) -> str:
     if doc.highlight_quotes:
         lines += ["", "## 闪光语句", ""]
         for q in doc.highlight_quotes:
-            lines.append(f'- "{q}"')
+            lines.append(f"- {q}")
+
+    if doc.speaker_intro:
+        lines += ["", "## 人物介绍", "", doc.speaker_intro]
 
     lines += ["", "## 全文转录", "", doc.full_text]
     return "\n".join(lines)

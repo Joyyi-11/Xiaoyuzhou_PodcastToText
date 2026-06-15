@@ -39,5 +39,6 @@ class OutputDoc:
     key_points: list[KeyPoint]
     highlight_quotes: list[str] = field(default_factory=list)
     full_text: str = ""  # cleaned and formatted full transcript (Markdown)
+    speaker_intro: str = ""  # speaker introduction from Show Notes (Markdown blockquote)
     costs: dict = field(default_factory=dict)  # {"transcription": 0.0, "llm": 0.0}
     timings: dict = field(default_factory=dict)  # {"scrape": 0, "transcribe": 0, "process": 0}

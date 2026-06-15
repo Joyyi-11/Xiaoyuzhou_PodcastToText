@@ -70,3 +70,35 @@ class TestParseOutput:
         assert doc.key_points[0].point == "核心观点A"
         # The duplicated title should be cleaned from evidence
         assert "核心观点A" not in doc.key_points[0].evidence or doc.key_points[0].evidence.count("核心观点A") == 0
+
+    def test_with_speaker_intro(self):
+        """Parse 人物介绍 section between 闪光语句 and 全文转录."""
+        content = """# Test
+
+## 内容提要
+
+- **核心观点**：证据文本。
+
+## 闪光语句
+
+- 闪光语句一
+- 闪光语句二
+
+## 人物介绍
+
+> **主持人**：Nina，主播
+> **嘉宾**：Guest，title
+
+## 全文转录
+
+主持人Nina：这是第一段。
+
+嘉宾Guest：这是第二段。"""
+        doc = _parse_output(content, "T", "P", "2026-01-01", "")
+        assert len(doc.key_points) == 1
+        assert len(doc.highlight_quotes) == 2
+        assert doc.highlight_quotes[0] == "闪光语句一"
+        assert "主持人" in doc.speaker_intro
+        assert "嘉宾" in doc.speaker_intro
+        assert "Nina" in doc.speaker_intro
+        assert "这是第一段" in doc.full_text

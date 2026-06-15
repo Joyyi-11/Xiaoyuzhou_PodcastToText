@@ -88,7 +88,9 @@ def _parse_output(
       ## 内容提要
       - **point**: evidence
       ## 闪光语句
-      - "quote"
+      - quote
+      ## 人物介绍
+      > **主持人**：...
       ## 全文转录
       ...
     """
@@ -112,12 +114,12 @@ def _parse_output(
                     key_points.append(KeyPoint(point=point_title, evidence=evidence))
 
     # --- Parse 闪光语句 section ---
-    m_quotes = re.search(r"##\s*闪光语句\s*\n(.*?)(?=##\s*全文转录|$)", content, re.DOTALL)
+    m_quotes = re.search(r"##\s*闪光语句\s*\n(.*?)(?=##\s*(?:人物介绍|全文转录)|$)", content, re.DOTALL)
     if m_quotes:
         quotes_section = m_quotes.group(1)
         for line in quotes_section.strip().split("\n"):
             raw = line.strip()
-            # Remove leading list marker (- or *) and surrounding quotes
+            # Remove leading list marker (- or *)
             if raw.startswith("- "):
                 raw = raw[2:]
             elif raw.startswith("* "):
@@ -125,6 +127,12 @@ def _parse_output(
             raw = raw.strip("\"'").strip("“”").strip()
             if raw and len(raw) >= 5:  # skip empty or too-short lines
                 highlight_quotes.append(raw)
+
+    # --- Parse 人物介绍 section ---
+    speaker_intro = ""
+    m_intro = re.search(r"##\s*人物介绍\s*\n(.*?)(?=##\s*全文转录|$)", content, re.DOTALL)
+    if m_intro:
+        speaker_intro = m_intro.group(1).strip()
 
     # --- Parse 全文转录 section ---
     m_full = re.search(r"##\s*全文转录\s*\n(.*)", content, re.DOTALL)
@@ -138,4 +146,5 @@ def _parse_output(
         key_points=key_points,
         highlight_quotes=highlight_quotes,
         full_text=full_text,
+        speaker_intro=speaker_intro,
     )
