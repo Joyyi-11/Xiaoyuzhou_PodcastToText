@@ -19,6 +19,7 @@ if sys.platform == "win32" and hasattr(sys.stdout, "reconfigure"):
 
 from src.audio import convert_to_wav, download_audio, get_duration_seconds
 from src.config import get_deepseek_api_key
+from src.diarization.speaker_diarization import assign_speakers, run_diarization
 from src.models.schemas import OutputDoc
 from src.processor import llm_processor
 from src.scraper.xiaoyuzhou import scrape_episode
@@ -68,6 +69,7 @@ def main() -> None:
     parser.add_argument("--model", default="small", choices=["tiny", "base", "small", "medium", "large-v3"],
                         help="Whisper 模型大小 (默认: small)")
     parser.add_argument("--no-llm", action="store_true", help="仅转录，不进行 LLM 后处理")
+    parser.add_argument("--no-diarization", action="store_true", help="跳过说话人日志，不区分说话人")
     args = parser.parse_args()
 
     # Check DeepSeek key
@@ -123,23 +125,36 @@ def main() -> None:
             output_path.write_text(transcript.raw_text, encoding="utf-8")
             print(f"\n原始转录已保存到: {output_path}")
         else:
-            # --- Step 4: LLM Process ---
+            # --- Step 4: Speaker Diarization ---
+            transcript_text = transcript.raw_text
+            if not args.no_diarization:
+                with Timer() as t:
+                    logger.info("Step 4/6: 说话人日志（Speaker Diarization）...")
+                    try:
+                        diarization_segments = run_diarization(wav_file, num_speakers=3)
+                        transcript_text = assign_speakers(transcript.segments, diarization_segments)
+                    except Exception as e:
+                        logger.warning("Diarization 失败，跳过: %s", e)
+                        transcript_text = transcript.raw_text
+                timers["diarization"] = t.elapsed
+
+            # --- Step 5: LLM Process ---
             with Timer() as t:
-                logger.info("Step 4/5: DeepSeek 后处理中...")
+                logger.info("Step 5/6: DeepSeek 后处理中...")
                 doc, inp_tok, out_tok = llm_processor.process(
                     deepseek_key,
                     episode.title,
                     episode.podcast_name,
                     episode.pub_date,
                     episode.show_notes,
-                    transcript.raw_text,
+                    transcript_text,
                 )
                 tracker.add_llm_usage(inp_tok, out_tok)
             timers["process"] = t.elapsed
 
-            # --- Step 5: Write output ---
+            # --- Step 6: Write output ---
             with Timer() as t:
-                logger.info("Step 5/5: 写入 Markdown...")
+                logger.info("Step 6/6: 写入 Markdown...")
                 doc.costs = {"transcription": tracker.transcription_yuan, "llm": tracker.llm_cost_yuan}
                 doc.timings = timers
                 md_content = build_output_markdown(doc)
